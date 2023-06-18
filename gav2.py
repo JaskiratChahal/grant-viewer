@@ -1,47 +1,12 @@
 """
 # Grant App Viewer 2
-# Starting from an already downloaded .zip which is unzipped to .xml
+# Starting from a pickle (.pkl) file
 # Source code from foa-finder: https://github.com/ericmuckley/foa-finder/
 """
 
-from bs4 import BeautifulSoup
 from datetime import datetime
 import pandas as pd
 import streamlit as st
-import xml.etree.ElementTree as ET
-
-pd.options.mode.chained_assignment = None
-
-st.title("Grant Application Viewer Demo")
-st.markdown("This is a demo of the `foa-finder` application. (Data courtesy of [grants.gov](https://www.grants.gov/).)")
-st.header("Data:")
-
-filename = 'GrantsDBExtract{}v2.xml'.format(datetime.today().strftime('%Y%m%d'))
-tree = ET.parse("unzipped/{}".format(filename))
-doc = str(ET.tostring(tree.getroot(), encoding='unicode', method='xml'))
-soup = BeautifulSoup(doc, 'lxml')
-print('Database unzipped')
-
-def soup_to_df(soup):
-    """Convert beautifulsoup object from grants.gov XML into dataframe"""
-    # list of bs4 FOA objects
-    s = 'opportunitysynopsisdetail'
-    foa_objs = [tag for tag in soup.find_all() if s in tag.name.lower()]
-
-    # loop over each FOA in the database and save its details as a dictionary
-    dic = {}
-    for i, foa in enumerate(foa_objs):
-        ch = foa.findChildren()
-        dic[i] = {fd.name.split('ns0:')[1]: fd.text for fd in ch}
-
-    # create dataframe from dictionary
-    df = pd.DataFrame.from_dict(dic, orient='index')
-    return df
-
-
-# get full dataframe of all FOAs
-df = soup_to_df(soup)
-
 
 def to_date(date_str):
     """Convert date string from database into date object"""
@@ -74,6 +39,15 @@ def sort_by_recent_updates(df):
     df = df.sort_values(by=['updatedate'], ascending=False)
     print('Database sorted and filtered by date')
     return df
+
+pd.options.mode.chained_assignment = None
+
+st.title("Grant Application Viewer Demo")
+st.markdown("This is a demo of the `foa-finder` application. (Data courtesy of [grants.gov](https://www.grants.gov/).)")
+st.header("Data:")
+
+# get full dataframe of all FOAs
+df = pd.read_pickle('data-2023-06-18.pkl')
 
 # include only FOAs which are not closed
 df = df[[is_open(i) for i in df['closedate']]]
