@@ -12,12 +12,12 @@ import xml.etree.ElementTree as ET
 
 pd.options.mode.chained_assignment = None
 
-st.title("GAV 2")
+st.title("Grant Application Viewer Demo")
 st.markdown("This is a demo of the `foa-finder` application. (Data courtesy of [grants.gov](https://www.grants.gov/).)")
 st.header("Data:")
 
 filename = 'GrantsDBExtract{}v2.xml'.format(datetime.today().strftime('%Y%m%d'))
-tree = ET.parse("/Users/jaskirat/Documents/GrantsApp/unzipped/{}".format(filename))
+tree = ET.parse("unzipped/{}".format(filename))
 doc = str(ET.tostring(tree.getroot(), encoding='unicode', method='xml'))
 soup = BeautifulSoup(doc, 'lxml')
 print('Database unzipped')
@@ -28,14 +28,12 @@ def soup_to_df(soup):
     s = 'opportunitysynopsisdetail'
     foa_objs = [tag for tag in soup.find_all() if s in tag.name.lower()]
 
-    print("got foa_objs")
     # loop over each FOA in the database and save its details as a dictionary
     dic = {}
     for i, foa in enumerate(foa_objs):
         ch = foa.findChildren()
         dic[i] = {fd.name.split('ns0:')[1]: fd.text for fd in ch}
 
-    print("finished iterating")
     # create dataframe from dictionary
     df = pd.DataFrame.from_dict(dic, orient='index')
     return df
